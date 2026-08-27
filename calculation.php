@@ -2,6 +2,7 @@
 function getResults($marks) {
     $marksRows = count($marks); //Number of participants
     $marksCols = count(current($marks)); //Number of judges
+    $initialMarks = $marks;
     //Adding columns of resulting sums
     for ($r = 0; $r < $marksRows; $r++) {
         for ($res = 1; $res <= $marksRows; $res++) {
@@ -122,14 +123,14 @@ function getResults($marks) {
                             $majArray7b[] = $majArray[$key];
                         }
                     }
-                    getResults7b($marks, $majJudges, $majArray7b, $num, $currentPlace);
+                    getResults7b($marks, $majJudges, $majArray7b, $num, $currentPlace, $initialMarks);
                 }
             }
         }
     }
     return $marks;
 }
-function getResults7b(&$marks, $majJudges, $currentMajArray, $currentNum, &$currentPlace) {
+function getResults7b(&$marks, $majJudges, $currentMajArray, $currentNum, &$currentPlace, $initialMarks) {
 
     $marksRows = count($marks);
 
@@ -206,12 +207,38 @@ function getResults7b(&$marks, $majJudges, $currentMajArray, $currentNum, &$curr
                                 $majArray7b[] = $majArray[$key];
                             }
                         }
-                        $maxPlace = $currentPlace + count($majArray7b) - 1;
-                        $avgPlace = ($currentPlace + $maxPlace) / 2;
+                        if (count($currentMajArray) < count($initialMarks)) {
+                            $marksRule8 = array();
+                            foreach ($currentMajArray as $key => $value) {
+                                $marksRule8["r" . $key] = $initialMarks["r" . $value];
+                            }
+                            $marksRule8Rows = count($marksRule8); //Number of participants
+                            $marksRule8Cols = count(current($marksRule8)); //Number of judges
+                            for ($col = 0; $col < $marksRule8Cols; $col++) {
+                                $colArray = array();
+                                for ($row = 0; $row < $marksRule8Rows; $row++) {
+                                    $colArray[] = $marksRule8["r" . $row]["c" . $col];
+                                }
+                                asort($colArray, SORT_NUMERIC);
+                                $newPlace = 1;
+                                foreach ($colArray as $key => $value) {
+                                    $marksRule8["r" . $key]["c" . $col] = strval($newPlace);
+                                    $newPlace++;
+                                }
+                            }
+                            $marksRule8Ext = getResults($marksRule8);
+                            foreach ($majArray7b as $key => $value) {
+                                $marks['r' . $value]['resFinal'] = $currentPlace+$marksRule8Ext["r".$key]['resFinal']-1;
+                            }
+                            $currentPlace = $currentPlace+count($majArray7b);
+                        } else {
+                            $maxPlace = $currentPlace + count($majArray7b) - 1;
+                            $avgPlace = ($currentPlace + $maxPlace) / 2;
 
-                        foreach ($majArray7b as $value) {
-                            $marks['r' . $value]['resFinal'] = $avgPlace;
-                            $currentPlace++;
+                            foreach ($majArray7b as $value) {
+                                $marks['r' . $value]['resFinal'] = $avgPlace;
+                                $currentPlace++;
+                            }
                         }
                     }
                 }
